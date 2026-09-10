@@ -1,6 +1,6 @@
 {
-  "name": "m3u-categories-api",
-  "version": "1.0.0",
+  "name": "moom-films-series-api",
+  "version": "2.0.0",
   "private": true,
   "engines": {
     "node": "20.x"
