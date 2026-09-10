@@ -30,8 +30,16 @@ function parseM3U(text) {
 function catalog(type) {
   return filesFor(type).map(file=>({name:file.replace(/\.m3u$/i,''), file, endpoint:`/api/${type}/${encodeURIComponent(file.replace(/\.m3u$/i,''))}`}));
 }
-function json(res, data, status=200) { res.status(status).setHeader('Content-Type','application/json; charset=utf-8'); res.end(JSON.stringify(data)); }
+function json(res, data, status=200) {
+  res.statusCode = status;
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.end(JSON.stringify(data));
+}
 module.exports = (req,res)=>{
+  if (req.method === 'OPTIONS') { res.statusCode = 204; return res.end(); }
   const raw=(req.url||'').split('?')[0].replace(/^\/+/,'').replace(/\/+$/,'');
   const parts=raw.split('/').filter(Boolean).map(decodeURIComponent);
   if(parts.length===0 || parts[0]!=='api') return json(res,{ok:true,name:'MOOM Films & Series API',version:'2.0.0',endpoints:['/api/movies','/api/series','/api/search?q=...']});
@@ -49,8 +57,7 @@ module.exports = (req,res)=>{
   if(category.toLowerCase().endsWith('.m3u')) category=category.slice(0,-4);
   const file=category+'.m3u'; const full=safeFile(type,file);
   if(!full) return json(res,{ok:false,error:'Category not found'},404);
-  if(parts[2].toLowerCase().endsWith('.m3u')) { res.status(200).setHeader('Content-Type','audio/x-mpegurl; charset=utf-8'); return res.end(fs.readFileSync(full)); }
+  if(parts[2].toLowerCase().endsWith('.m3u')) { res.statusCode = 200; res.setHeader('Content-Type','audio/x-mpegurl; charset=utf-8'); return res.end(fs.readFileSync(full)); }
   const items=parseM3U(fs.readFileSync(full,'utf8')).map(x=>({...x,file}));
   return json(res,{ok:true,type,category,file,count:items.length,items});
 };
-
